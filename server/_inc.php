@@ -89,7 +89,12 @@ if (!is_dir(DATA_ROOT)) {
 
 // Fix issues with badly configured web servers
 if (!isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) && !empty($_SERVER['HTTP_AUTHORIZATION'])) {
-	@list($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) = explode(':', base64_decode(substr($_SERVER['HTTP_AUTHORIZATION'], 6)));
+	if (strncasecmp($_SERVER['HTTP_AUTHORIZATION'], 'Basic ', 6) === 0) {
+		$decoded = base64_decode(substr($_SERVER['HTTP_AUTHORIZATION'], 6), true);
+		if ($decoded !== false && strpos($decoded, ':') !== false) {
+			list($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) = explode(':', $decoded, 2);
+		}
+	}
 }
 
 $gpodder = new GPodder;
