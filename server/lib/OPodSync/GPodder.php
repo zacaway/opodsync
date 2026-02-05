@@ -47,7 +47,21 @@ class GPodder
 
 	public function loginExternal(string $id): void
 	{
-		$r = file_get_contents(rtrim(KARADAV_URL, '/') . '/session.php?id=' . rawurlencode($id));
+		$url = rtrim(KARADAV_URL, '/') . '/session.php';
+
+		if (parse_url(KARADAV_URL, PHP_URL_SCHEME) !== 'https') {
+			throw new \RuntimeException('KARADAV_URL must use HTTPS to protect authentication tokens');
+		}
+
+		$context = stream_context_create([
+			'http' => [
+				'method'  => 'POST',
+				'header'  => 'Content-Type: application/x-www-form-urlencoded',
+				'content' => http_build_query(['id' => $id]),
+			],
+		]);
+
+		$r = file_get_contents($url, false, $context);
 		$r = json_decode($r);
 
 		if (!$r || !isset($r->user->login, $r->user->id)) {
