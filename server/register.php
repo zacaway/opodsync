@@ -11,7 +11,10 @@ if (!$gpodder->canSubscribe()) {
 $error = null;
 
 if (!empty($_POST)) {
-	if (!$gpodder->checkCaptcha($_POST['captcha'] ?? '')) {
+	if (!$gpodder->checkCSRFToken()) {
+		$error = 'Invalid form token, please try again';
+	}
+	elseif (!$gpodder->checkCaptcha($_POST['captcha'] ?? '')) {
 		$error = 'Invalid captcha';
 	}
 	else {

@@ -48,7 +48,10 @@ if (KARADAV_URL && isset($_GET['ext_sessionid'])) {
 }
 
 if ($gpodder->user) {
-	if (!empty($_POST['enable_token'])) {
+	if (!empty($_POST) && !$gpodder->checkCSRFToken()) {
+		throw new UserException('Invalid form token, please try again');
+	}
+	elseif (!empty($_POST['enable_token'])) {
 		$gpodder->enableToken();
 		header('Location: ./');
 		exit;

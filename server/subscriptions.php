@@ -12,16 +12,18 @@ if (!$gpodder->user) {
 $error = null;
 $success = null;
 
+if (!empty($_POST) && !$gpodder->checkCSRFToken()) {
+	$error = 'Invalid form token, please try again';
+}
 // Handle new subscription
-if (!empty($_POST['feed_url'])) {
+elseif (!empty($_POST['feed_url'])) {
 	$error = $gpodder->addSubscription($_POST['feed_url']);
 	if (!$error) {
 		$success = 'Successfully subscribed to the feed!';
 	}
 }
-
 // Handle unsubscribe
-if (!empty($_POST['unsubscribe']) && is_numeric($_POST['unsubscribe'])) {
+elseif (!empty($_POST['unsubscribe']) && is_numeric($_POST['unsubscribe'])) {
 	if ($gpodder->removeSubscription((int)$_POST['unsubscribe'])) {
 		$success = 'Successfully unsubscribed from the feed.';
 	}

@@ -5,6 +5,7 @@
 {/if}
 
 <form method="post" action="">
+	<input type="hidden" name="csrf_token" value="{$csrf_token}" />
 	<fieldset>
 		<legend>Create an account</legend>
 		<dl>

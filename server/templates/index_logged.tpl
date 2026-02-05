@@ -17,6 +17,7 @@
 </nav>
 
 <form method="post" action="">
+	<input type="hidden" name="csrf_token" value="{$csrf_token}" />
 	<fieldset>
 		<legend>Secret GPodder username</legend>
 	{if $gpodder_token}

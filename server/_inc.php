@@ -107,6 +107,7 @@ $tpl->assign('title', TITLE);
 $tpl->assign('can_update_feeds', !DISABLE_USER_METADATA_UPDATE);
 $tpl->assign('user', $gpodder->user);
 $tpl->assign('url', BASE_URL);
+$tpl->assign('csrf_token', $gpodder->generateCSRFToken());
 $tpl->register_modifier('format_description', [Utils::class, 'format_description']);
 
 

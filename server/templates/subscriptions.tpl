@@ -19,6 +19,7 @@
 {/if}
 
 <form method="post" action="">
+	<input type="hidden" name="csrf_token" value="{$csrf_token}" />
 	<fieldset>
 		<legend>Subscribe to a new podcast</legend>
 		<p class="center help">Enter the RSS feed URL of the podcast:</p>
@@ -49,6 +50,7 @@
 			<td>{$row.count}</td>
 			<td>
 				<form method="post" action="" class="inline-form" onsubmit="return confirm('Unsubscribe from this podcast?');">
+					<input type="hidden" name="csrf_token" value="{$csrf_token}" />
 					<input type="hidden" name="unsubscribe" value="{$row.id}" />
 					<button type="submit" class="btn sm btn-danger" title="Unsubscribe">✕</button>
 				</form>
