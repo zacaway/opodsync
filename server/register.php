@@ -11,7 +11,7 @@ if (!$gpodder->canSubscribe()) {
 $error = null;
 
 if (!empty($_POST)) {
-	if (!$gpodder->checkCaptcha($_POST['captcha'] ?? '', $_POST['cc'] ?? '')) {
+	if (!$gpodder->checkCaptcha($_POST['captcha'] ?? '')) {
 		$error = 'Invalid captcha';
 	}
 	else {

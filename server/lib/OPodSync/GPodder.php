@@ -213,6 +213,8 @@ class GPodder
 	 */
 	public function generateCaptcha(): string
 	{
+		$this->startSession(true);
+
 		$n = '';
 		$c = '';
 
@@ -222,15 +224,23 @@ class GPodder
 			$n .= sprintf('<b>%d</b><i>%d</i>', random_int(0, 9), $j);
 		}
 
-		$n .= sprintf('<input type="hidden" name="cc" value="%s" />', sha1($c . __DIR__));
+		$_SESSION['captcha'] = $c;
 
 		return $n;
 	}
 
-	public function checkCaptcha(string $captcha, string $check): bool
+	public function checkCaptcha(string $captcha): bool
 	{
-		$captcha = trim($captcha);
-		return sha1($captcha . __DIR__) === $check;
+		$this->startSession(true);
+
+		$expected = $_SESSION['captcha'] ?? null;
+		unset($_SESSION['captcha']);
+
+		if ($expected === null) {
+			return false;
+		}
+
+		return hash_equals($expected, trim($captcha));
 	}
 
 	public function countActiveSubscriptions(): int
