@@ -287,8 +287,8 @@ class API
 			return false;
 		}
 
-		if (null !== $r) {
-			echo json_encode($return, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
+		if (isset($r)) {
+			echo json_encode($r, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
 			return true;
 		}
 
@@ -296,7 +296,7 @@ class API
 			throw new APIException('No username or password provided', 401);
 		}
 
-		$this->debug('Nextcloud compatibility: %s / %s', $_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']);
+		$this->debug('Nextcloud compatibility: %s', $_SERVER['PHP_AUTH_USER']);
 
 		$db = DB::getInstance();
 		$user = $db->firstRow('SELECT id, password FROM users WHERE name = ?;', $_SERVER['PHP_AUTH_USER']);
