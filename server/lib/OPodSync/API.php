@@ -279,7 +279,7 @@ class API
 			$r = [
 				'server' => $this->url(),
 				'loginName' => $_SESSION['user']->name,
-				'appPassword' => $_SESSION['app_password'], // FIXME provide a real app-password here
+				'appPassword' => $_SESSION['app_password'],
 			];
 		}
 		// This is not a nextcloud route
@@ -305,12 +305,17 @@ class API
 			throw new APIException('Invalid username', 401);
 		}
 
-		// FIXME store a real app password instead of this hack
-		$token = strtok($_SERVER['PHP_AUTH_PW'], ':');
-		$password = strtok('');
-		$app_password = sha1($user->password . $token);
+		$authenticated = false;
+		$app_passwords = $db->all('SELECT password_hash FROM app_passwords WHERE user = ?;', $user->id);
 
-		if ($app_password !== $password) {
+		foreach ($app_passwords as $ap) {
+			if (password_verify($_SERVER['PHP_AUTH_PW'], $ap->password_hash)) {
+				$authenticated = true;
+				break;
+			}
+		}
+
+		if (!$authenticated) {
 			throw new APIException('Invalid username/password', 401);
 		}
 

@@ -109,7 +109,10 @@ class GPodder
 		$_SESSION['user'] = $this->user = $user;
 
 		if (!empty($_GET['token'])) {
-			$_SESSION['app_password'] = sprintf('%s:%s', $_GET['token'], sha1($user->password . $_GET['token']));
+			$app_password = bin2hex(random_bytes(32));
+			$db->simple('INSERT INTO app_passwords (user, password_hash) VALUES (?, ?);',
+				$user->id, password_hash($app_password, PASSWORD_DEFAULT));
+			$_SESSION['app_password'] = $app_password;
 		}
 
 		return null;

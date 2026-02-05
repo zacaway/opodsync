@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS app_passwords (
+	id INTEGER NOT NULL PRIMARY KEY,
+	user INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+	password_hash TEXT NOT NULL,
+	created INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
