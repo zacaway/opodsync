@@ -7,7 +7,7 @@ $r = $http->GET('/register.php');
 Test::equals(200, $r->status, $r);
 
 $dom = dom($r->body);
-$cc = $dom->querySelector('input[name="cc"]');
+$cc = $dom->querySelector('input[name="csrf_token"]');
 $codes = $dom->querySelectorAll('label[for="captcha"] i');
 
 Test::assert($cc);
@@ -19,7 +19,7 @@ foreach ($codes as $c) {
 	$code .= $c->textContent;
 }
 
-$form = ['login' => 'demo', 'password' => 'demodemo', 'captcha' => $code, 'cc' => $cc->getAttribute('value')];
+$form = ['login' => 'demo', 'password' => 'demodemo', 'captcha' => $code, 'csrf_token' => $cc->getAttribute('value')];
 
 $r = $http->POST('/register.php', $form);
 

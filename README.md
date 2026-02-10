@@ -58,6 +58,12 @@ If this image stops being maintained, see [Docker Hub](https://hub.docker.com/se
 
 **Please don't report Docker issues here, this repository is only for software development.**
 
+### Nix
+
+If you have [nix](https://nixos.org) available, use `nix develop` to start a nix shell with all the dependencies installed.
+
+Then from that shell, you can run `dev-server` to start a local dev server.
+
 ### Configuration
 
 You can copy the `config.dist.php` to `data/config.local.php`, and edit it to suit your needs.

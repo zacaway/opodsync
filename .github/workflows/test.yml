@@ -1,0 +1,34 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php-version: ['8.0', '8.1', '8.2', '8.3']
+
+    steps:
+      - name: Checkout opodsync
+        uses: actions/checkout@v4
+
+      - name: Checkout kd2fw
+        uses: actions/checkout@v4
+        with:
+          repository: kd2org/kd2fw
+          path: ../kd2fw
+
+      - name: Setup PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: sqlite3, pcntl, curl
+
+      - name: Run tests
+        run: make test

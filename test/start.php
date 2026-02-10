@@ -8,6 +8,8 @@ require '../../kd2fw/src/lib/KD2/Test.php';
 require '../../kd2fw/src/lib/KD2/HTTP.php';
 require '../../kd2fw/src/lib/KD2/HTMLDocument.php';
 
+echo "=== Integration Tests ===\n\n";
+
 $server = 'localhost:8099';
 $url = 'http://' . $server;
 
@@ -18,7 +20,7 @@ if (file_exists($data_root)) {
 }
 
 mkdir($data_root);
-//file_put_contents($data_root . '/config.local.php', '<?php namespace OPodSync;');
+file_put_contents($data_root . '/config.local.php', "<?php namespace OPodSync;\nconst ENABLE_SUBSCRIPTIONS = true;\n");
 
 $root = realpath(__DIR__ . '/../server');
 
@@ -47,13 +49,35 @@ $http->http_options['timeout'] = 2;
 $list = glob(__DIR__ . '/tests/*.php');
 natcasesort($list);
 
+$passed = 0;
+$failed = 0;
+
 try {
 	foreach ($list as $file) {
-		require $file;
+		$name = basename($file, '.php');
+		echo "  [$name] ";
+
+		try {
+			require $file;
+			echo "OK\n";
+			$passed++;
+		}
+		catch (\Exception $e) {
+			echo "FAIL\n";
+			echo "    " . $e->getMessage() . "\n";
+			echo "    at " . $e->getFile() . ':' . $e->getLine() . "\n";
+			$failed++;
+		}
 	}
 }
 finally {
 	shell_exec('kill ' . $pid);
+}
+
+echo "\nIntegration tests: $passed passed, $failed failed\n";
+
+if ($failed > 0) {
+	exit(1);
 }
 
 function dom(string $html) {
