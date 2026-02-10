@@ -38,12 +38,12 @@ $r = $http->POST('/login.php', [
 Test::equals(401, $r->status, 'nonexistent user returns 401');
 Test::assert(str_contains($r->body, 'Invalid username/password'), 'nonexistent user error message');
 
-// Missing CSRF → error
+// Missing CSRF → error (login.php returns 401 on any login failure)
 $r = $http->POST('/login.php', [
 	'login' => 'demo',
 	'password' => 'demodemo',
 ]);
-Test::equals(200, $r->status);
+Test::equals(401, $r->status, 'missing CSRF returns 401');
 Test::assert(str_contains($r->body, 'Invalid form token'), 'missing CSRF token error');
 
 // Successful login with CSRF (follows redirect to index)

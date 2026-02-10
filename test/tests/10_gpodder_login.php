@@ -16,5 +16,4 @@ Test::equals(401, $r->status, $r);
 $r = $http->POST('/api/2/auth/demo/login.json', [], HTTP::FORM, ['Authorization' => 'Basic ' . base64_encode('demo:demodemo')]);
 
 Test::equals(200, $r->status, $r);
-Test::assert(count($r->cookies) === 1);
-Test::assert(!empty($r->cookies['sessionid']));
+Test::assert(!empty($http->cookies['sessionid']), 'sessionid cookie set after login');

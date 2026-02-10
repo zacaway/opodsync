@@ -4,9 +4,11 @@ use KD2\Test;
 use KD2\HTTP;
 use KD2\HTMLDocument;
 
-require '../../kd2fw/src/lib/KD2/Test.php';
-require '../../kd2fw/src/lib/KD2/HTTP.php';
-require '../../kd2fw/src/lib/KD2/HTMLDocument.php';
+$kd2_path = __DIR__ . '/../../kd2fw/src/lib/KD2';
+
+require $kd2_path . '/Test.php';
+require $kd2_path . '/HTTP.php';
+require $kd2_path . '/HTMLDocument.php';
 
 echo "=== Integration Tests ===\n\n";
 
