@@ -26,17 +26,38 @@ file_put_contents($data_root . '/config.local.php', "<?php namespace OPodSync;\n
 
 $root = realpath(__DIR__ . '/../server');
 
+$server_log = $data_root . '/server.log';
+
 $cmd = sprintf(
-	'DATA_ROOT=%s php -S %s -d variables_order=EGPCS -t %s %s > /dev/null 2>&1 & echo $!',
+	'DATA_ROOT=%s php -S %s -d variables_order=EGPCS -t %s %s > %s 2>&1 & echo $!',
 	escapeshellarg($data_root),
 	escapeshellarg($server),
 	escapeshellarg($root),
-	escapeshellarg($root . '/index.php')
+	escapeshellarg($root . '/index.php'),
+	escapeshellarg($server_log)
 );
 
-$pid = shell_exec($cmd);
+$pid = trim(shell_exec($cmd));
 
-sleep(1);
+// Wait for server to be ready (up to 5 seconds)
+$ready = false;
+for ($i = 0; $i < 50; $i++) {
+	$fp = @fsockopen('localhost', 8099, $errno, $errstr, 0.1);
+	if ($fp) {
+		fclose($fp);
+		$ready = true;
+		break;
+	}
+	usleep(100000); // 100ms
+}
+
+if (!$ready) {
+	echo "ERROR: Server failed to start (PID: $pid)\n";
+	if (file_exists($server_log)) {
+		echo file_get_contents($server_log);
+	}
+	exit(1);
+}
 
 declare(ticks = 1);
 

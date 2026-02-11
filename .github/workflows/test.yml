@@ -34,14 +34,12 @@ jobs:
           php-version: ${{ matrix.php-version }}
           extensions: sqlite3, pcntl, curl
 
-      - name: Verify setup
-        run: |
-          php -v
-          php -m | grep -E 'pcntl|sqlite|curl'
-          ls -la "$GITHUB_WORKSPACE/../kd2fw/src/lib/KD2/Test.php"
-
       - name: Run unit tests
         run: make test-unit
 
       - name: Run integration tests
         run: make test-integration
+
+      - name: Show server log on failure
+        if: failure()
+        run: cat test/data/server.log 2>/dev/null || echo "No server log found"
