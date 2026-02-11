@@ -39,10 +39,16 @@ jobs:
 
       - name: Run integration tests
         run: |
-          make test-integration > test-output.txt 2>&1; rc=$?
+          set +e
+          make test-integration > test-output.txt 2>&1
+          rc=$?
+          set -e
           cat test-output.txt
           if [ $rc -ne 0 ]; then
-            echo "::error file=test/start.php::Integration test output: $(cat test-output.txt | tr '\n' ' ' | head -c 500)"
-            echo "::error file=test/start.php::Server log: $(cat test/data/server.log 2>/dev/null | tr '\n' ' ' | head -c 500)"
+            echo "::error file=test/start.php,title=Integration tests failed::$(cat test-output.txt | tr '\n' '|' | head -c 3000)"
+            SRV_LOG=$(cat test/data/server.log 2>/dev/null | tail -50 | tr '\n' '|' | head -c 1000)
+            if [ -n "$SRV_LOG" ]; then
+              echo "::error file=test/start.php,title=Server log::$SRV_LOG"
+            fi
           fi
           exit $rc
