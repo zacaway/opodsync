@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         php-version: ['8.0', '8.1', '8.2', '8.3']
 
@@ -33,5 +34,14 @@ jobs:
           php-version: ${{ matrix.php-version }}
           extensions: sqlite3, pcntl, curl
 
-      - name: Run tests
-        run: make test
+      - name: Verify setup
+        run: |
+          php -v
+          php -m | grep -E 'pcntl|sqlite|curl'
+          ls -la "$GITHUB_WORKSPACE/../kd2fw/src/lib/KD2/Test.php"
+
+      - name: Run unit tests
+        run: make test-unit
+
+      - name: Run integration tests
+        run: make test-integration
