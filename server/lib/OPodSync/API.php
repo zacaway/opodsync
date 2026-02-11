@@ -120,7 +120,7 @@ class API
 	/**
 	 * @see https://gpoddernet.readthedocs.io/en/latest/api/reference/auth.html
 	 */
-	public function handleAuth(): null
+	public function handleAuth(): void
 	{
 		$this->requireMethod('POST');
 
