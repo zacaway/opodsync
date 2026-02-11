@@ -35,4 +35,12 @@ jobs:
           extensions: sqlite3, pcntl, curl
 
       - name: Run tests
-        run: make test
+        run: |
+          set +e
+          make test 2>&1
+          rc=$?
+          set -e
+          if [ $rc -ne 0 ]; then
+            echo "::error file=test/start.php,title=Test failure::$(cat test/data/server.log 2>/dev/null | tail -20 | tr '\n' '|')"
+          fi
+          exit $rc
