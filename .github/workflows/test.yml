@@ -38,13 +38,30 @@ jobs:
         run: make test-unit
 
       - name: Run integration tests
-        run: make test-integration 2>&1 | tee test-output.txt; exit ${PIPESTATUS[0]}
+        id: integration
+        run: |
+          make test-integration 2>&1 | tee test-output.txt
+          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
-      - name: Upload test output on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-output-php-${{ matrix.php-version }}
-          path: |
-            test-output.txt
-            test/data/server.log
+      - name: Write test output to summary
+        if: always()
+        run: |
+          echo '## Test Output (PHP ${{ matrix.php-version }})' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat test-output.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "No output" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '## Server Log' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat test/data/server.log >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "No server log" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail if integration tests failed
+        if: always()
+        run: |
+          if [ -f test-output.txt ] && grep -q "failed" test-output.txt; then
+            exit 1
+          fi
+          # Also fail if make itself failed
+          if ! grep -q "passed" test-output.txt 2>/dev/null; then
+            exit 1
+          fi
