@@ -10,6 +10,7 @@ fseek($fp, 0);
 $r = $http->PUT('/subscriptions/demo/test-device.opml', $fp);
 Test::equals(501, $r->status, $r);
 
+fseek($fp, 0);
 $r = $http->PUT('/subscriptions/demo/test-device.json', $fp);
 Test::equals(400, $r->status, $r);
 fclose($fp);
