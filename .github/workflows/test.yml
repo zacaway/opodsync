@@ -35,13 +35,4 @@ jobs:
           extensions: sqlite3, pcntl, curl
 
       - name: Run tests
-        run: |
-          set +e
-          make test > test-output.txt 2>&1
-          rc=$?
-          cat test-output.txt
-          set -e
-          if [ $rc -ne 0 ]; then
-            echo "::error file=test/start.php,title=Test output::$(cat test-output.txt | tr '\n' '|' | head -c 3000)"
-          fi
-          exit $rc
+        run: make test
