@@ -39,7 +39,10 @@ jobs:
 
       - name: Run integration tests
         run: |
-          make test-integration 2>&1; rc=$?
-          echo "--- Server log ---"
-          cat test/data/server.log 2>/dev/null || echo "No server log"
+          make test-integration > test-output.txt 2>&1; rc=$?
+          cat test-output.txt
+          if [ $rc -ne 0 ]; then
+            echo "::error file=test/start.php::Integration test output: $(cat test-output.txt | tr '\n' ' ' | head -c 500)"
+            echo "::error file=test/start.php::Server log: $(cat test/data/server.log 2>/dev/null | tr '\n' ' ' | head -c 500)"
+          fi
           exit $rc
