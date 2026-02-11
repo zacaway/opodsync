@@ -39,5 +39,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          set -o pipefail
-          make test-integration 2>&1 | tee /dev/stderr
+          make test-integration 2>&1; rc=$?
+          echo "--- Server log ---"
+          cat test/data/server.log 2>/dev/null || echo "No server log"
+          exit $rc
