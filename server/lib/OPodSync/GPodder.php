@@ -273,7 +273,7 @@ class GPodder
 	public function listActiveSubscriptions(): array
 	{
 		$db = DB::getInstance();
-		return $db->all('SELECT s.*, COUNT(a.rowid) AS count, f.title, COALESCE(MAX(a.changed), s.changed) AS last_change
+		return $db->all('SELECT s.*, COUNT(a.id) AS count, f.title, COALESCE(MAX(a.changed), s.changed) AS last_change
 			FROM subscriptions s
 				LEFT JOIN episodes_actions a ON a.subscription = s.id
 				LEFT JOIN feeds f ON f.id = s.feed
@@ -373,9 +373,9 @@ class GPodder
 		], ['user', 'url']);
 
 		// Get the subscription ID and fetch feed metadata
-		$subscription = $db->lastInsertRowID();
+		$subscription = $db->lastInsertId();
 		if ($subscription) {
-			$this->updateFeedForSubscription($subscription->id);
+			$this->updateFeedForSubscription((int) $subscription);
 		}
 
 		return null;

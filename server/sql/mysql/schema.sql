@@ -1,0 +1,84 @@
+CREATE TABLE feeds (
+	id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	feed_url TEXT NOT NULL,
+	image_url TEXT NULL,
+	url TEXT NULL,
+	language VARCHAR(2) NULL,
+	title TEXT NULL,
+	description TEXT NULL,
+	pubdate DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+	last_fetch INTEGER NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE UNIQUE INDEX feed_url ON feeds (feed_url(255));
+
+CREATE TABLE episodes (
+	id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	feed INTEGER NOT NULL REFERENCES feeds (id) ON DELETE CASCADE,
+	media_url TEXT NOT NULL,
+	url TEXT NULL,
+	image_url TEXT NULL,
+	duration INTEGER NULL,
+	title TEXT NULL,
+	description TEXT NULL,
+	pubdate DATETIME NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE UNIQUE INDEX episodes_unique ON episodes (feed, media_url(255));
+
+CREATE TABLE users (
+	id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	name VARCHAR(255) NOT NULL,
+	password TEXT NOT NULL,
+	token VARCHAR(255) NULL,
+	external_user_id INTEGER NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE UNIQUE INDEX users_unique ON users (name, external_user_id);
+
+CREATE TABLE devices (
+	id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	user INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+	deviceid VARCHAR(255) NOT NULL,
+	name TEXT NULL,
+	data TEXT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE UNIQUE INDEX deviceid ON devices (deviceid, user);
+
+CREATE TABLE subscriptions (
+	id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	user INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+	feed INTEGER NULL REFERENCES feeds (id) ON DELETE SET NULL,
+	url TEXT NOT NULL,
+	deleted INTEGER NOT NULL DEFAULT 0,
+	changed INTEGER NOT NULL,
+	data TEXT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE UNIQUE INDEX subscription_url ON subscriptions (url(255), user);
+CREATE INDEX subscription_feed ON subscriptions (feed);
+
+CREATE TABLE episodes_actions (
+	id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	user INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+	subscription INTEGER NOT NULL REFERENCES subscriptions (id) ON DELETE CASCADE,
+	episode INTEGER NULL REFERENCES episodes (id) ON DELETE SET NULL,
+	device INTEGER NULL REFERENCES devices (id) ON DELETE SET NULL,
+	url TEXT NOT NULL,
+	changed INTEGER NOT NULL,
+	action VARCHAR(50) NOT NULL,
+	data TEXT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE INDEX episodes_idx ON episodes_actions (user, action, changed);
+CREATE INDEX episodes_actions_link ON episodes_actions (episode);
+
+CREATE TABLE app_passwords (
+	id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	user INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+	password_hash TEXT NOT NULL,
+	created INTEGER NOT NULL DEFAULT (UNIX_TIMESTAMP())
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE schema_version (version INTEGER NOT NULL);

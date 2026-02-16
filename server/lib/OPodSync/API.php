@@ -55,6 +55,13 @@ class API
 		foreach ($result as $row) {
 			$row = array_merge(json_decode($row->data, true, 512, JSON_THROW_ON_ERROR), (array) $row);
 			unset($row['data']);
+
+			// Format unix timestamp as ISO 8601 (cross-database compatible)
+			if (isset($row['changed_ts'])) {
+				$row['timestamp'] = gmdate('Y-m-d\TH:i:s\Z', $row['changed_ts']);
+				unset($row['changed_ts']);
+			}
+
 			$out[] = $row;
 		}
 
@@ -484,27 +491,28 @@ class API
 				throw new APIException('Invalid input: requires an array with one line per feed', 400);
 			}
 
-			$db->exec('BEGIN;');
-			$st = $db->prepare('INSERT OR IGNORE INTO subscriptions (user, url, changed) VALUES (:user, :url, strftime(\'%s\', \'now\'));');
+			$db->begin();
+
+			$ts = time();
 
 			foreach ($lines as $url) {
 				$url = is_object($url) ? $url->feed : $url;
 				$this->validateURL($url);
 
-				$st->bindValue(':url', $url);
-				$st->bindValue(':user', $this->user->id);
-				$st->execute();
-				$st->reset();
-				$st->clear();
+				$db->insertIgnore('subscriptions', [
+					'user'    => $this->user->id,
+					'url'     => $url,
+					'changed' => $ts,
+				]);
 			}
 
-			$db->exec('END;');
+			$db->commit();
 			return null;
 		}
 		elseif ($this->method === 'POST') {
 			$input = $this->getInput();
 
-			$db->exec('BEGIN;');
+			$db->begin();
 
 			$ts = time();
 
@@ -534,7 +542,7 @@ class API
 				}
 			}
 
-			$db->exec('END;');
+			$db->commit();
 			return ['timestamp' => $ts, 'update_urls' => []];
 		}
 
@@ -554,7 +562,7 @@ class API
 			return [
 				'timestamp' => time(),
 				'actions' => $this->queryWithData('SELECT e.url AS episode, e.action, e.data, s.url AS podcast,
-					strftime(\'%Y-%m-%dT%H:%M:%SZ\', e.changed, \'unixepoch\') AS timestamp
+					e.changed AS changed_ts
 					FROM episodes_actions e
 					INNER JOIN subscriptions s ON s.id = e.subscription
 					WHERE e.user = ? AND e.changed >= ?;', $this->user->id, $since)
@@ -570,10 +578,9 @@ class API
 		}
 
 		$db = DB::getInstance();
-		$db->exec('BEGIN;');
+		$db->begin();
 
 		$timestamp = time();
-		$st = $db->prepare('INSERT INTO episodes_actions (user, subscription, url, changed, action, data) VALUES (:user, :subscription, :url, :changed, :action, :data);');
 
 		foreach ($input as $action) {
 			if (!isset($action->podcast, $action->action, $action->episode)) {
@@ -586,8 +593,12 @@ class API
 			$id = $db->firstColumn('SELECT id FROM subscriptions WHERE url = ? AND user = ?;', $action->podcast, $this->user->id);
 
 			if (!$id) {
-				$db->simple('INSERT OR IGNORE INTO subscriptions (user, url, changed) VALUES (?, ?, ?);', $this->user->id, $action->podcast, $timestamp);
-				$id = $db->lastInsertRowID();
+				$db->insertIgnore('subscriptions', [
+					'user'    => $this->user->id,
+					'url'     => $action->podcast,
+					'changed' => $timestamp,
+				]);
+				$id = $db->lastInsertId();
 			}
 
 			if (!empty($action->timestamp)) {
@@ -598,19 +609,21 @@ class API
 				$changed = null;
 			}
 
-			$st->bindValue(':user', $this->user->id);
-			$st->bindValue(':subscription', $id);
-			$st->bindValue(':url', $action->episode);
-			$st->bindValue(':changed', $changed ?? $timestamp);
-			$st->bindValue(':action', strtolower($action->action));
+			$episode_url = $action->episode;
+			$episode_action = strtolower($action->action);
 			unset($action->action, $action->episode, $action->podcast);
-			$st->bindValue(':data', json_encode($action, JSON_THROW_ON_ERROR));
-			$st->execute();
-			$st->reset();
-			$st->clear();
+
+			$db->simple('INSERT INTO episodes_actions (user, subscription, url, changed, action, data) VALUES (?, ?, ?, ?, ?, ?);',
+				$this->user->id,
+				$id,
+				$episode_url,
+				$changed ?? $timestamp,
+				$episode_action,
+				json_encode($action, JSON_THROW_ON_ERROR)
+			);
 		}
 
-		$db->exec('END;');
+		$db->commit();
 
 		return compact('timestamp') + ['update_urls' => []];
 	}

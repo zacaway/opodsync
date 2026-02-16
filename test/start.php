@@ -22,7 +22,20 @@ if (file_exists($data_root)) {
 }
 
 mkdir($data_root);
-file_put_contents($data_root . '/config.local.php', "<?php namespace OPodSync;\nconst ENABLE_SUBSCRIPTIONS = true;\n");
+
+$db_driver = getenv('DB_DRIVER') ?: 'sqlite';
+$config = "<?php namespace OPodSync;\nconst ENABLE_SUBSCRIPTIONS = true;\n";
+
+if ($db_driver === 'mysql') {
+	$config .= sprintf("const DB_DRIVER = 'mysql';\n");
+	$config .= sprintf("const DB_HOST = %s;\n", var_export(getenv('DB_HOST') ?: 'localhost', true));
+	$config .= sprintf("const DB_USER = %s;\n", var_export(getenv('DB_USER') ?: 'root', true));
+	$config .= sprintf("const DB_PASSWORD = %s;\n", var_export(getenv('DB_PASSWORD') ?: '', true));
+	$config .= sprintf("const DB_NAME = %s;\n", var_export(getenv('DB_NAME') ?: 'opodsync_test', true));
+	$config .= sprintf("const DB_PORT = %s;\n", var_export((int)(getenv('DB_PORT') ?: 3306), true));
+}
+
+file_put_contents($data_root . '/config.local.php', $config);
 
 $root = realpath(__DIR__ . '/../server');
 

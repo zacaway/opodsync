@@ -80,15 +80,24 @@ const DATA_ROOT = ROOT . '/data';
 const CACHE_ROOT = DATA_ROOT . '/cache';
 
 /**
+ * DB_DRIVER
+ * Database driver to use: 'sqlite' or 'mysql'
+ *
+ * Default: 'sqlite'
+ * @var string
+ */
+const DB_DRIVER = 'sqlite';
+
+/**
  * DB_FILE
- * SQLite3 database file
+ * SQLite3 database file (only used when DB_DRIVER = 'sqlite')
  * This is where the users, app sessions and stuff will be stored
  */
 const DB_FILE = DATA_ROOT . '/data.sqlite';
 
 /**
  * SQLITE_JOURNAL_MODE
- * SQLite3 journaling mode
+ * SQLite3 journaling mode (only used when DB_DRIVER = 'sqlite')
  * Default: TRUNCATE (slower, but safer)
  * Recommended: WAL (faster, but read below)
  *
@@ -104,6 +113,23 @@ const DB_FILE = DATA_ROOT . '/data.sqlite';
  * @var string
  */
 const SQLITE_JOURNAL_MODE = 'TRUNCATE';
+
+/**
+ * MySQL/MariaDB configuration (only used when DB_DRIVER = 'mysql')
+ *
+ * Example:
+ *   const DB_DRIVER = 'mysql';
+ *   const DB_HOST = 'localhost';
+ *   const DB_USER = 'opodsync';
+ *   const DB_PASSWORD = 'secret';
+ *   const DB_NAME = 'opodsync';
+ *   const DB_PORT = 3306;
+ */
+//const DB_HOST = 'localhost';
+//const DB_USER = 'opodsync';
+//const DB_PASSWORD = 'secret';
+//const DB_NAME = 'opodsync';
+//const DB_PORT = 3306;
 
 /**
  * ERRORS_SHOW
