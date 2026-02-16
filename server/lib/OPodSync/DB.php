@@ -108,14 +108,24 @@ class DB extends \KD2\DB\DB
 	}
 
 	/**
-	 * Run multi-statement SQL using the appropriate method per driver.
-	 * SQLite PDO's exec() handles multiple statements natively,
-	 * while MySQL requires execMultiple() for proper transaction handling.
+	 * Run multi-statement SQL (DDL) using the appropriate method per driver.
+	 * SQLite PDO's exec() handles multiple statements natively.
+	 * MySQL DDL causes implicit commits, so we cannot wrap in a transaction;
+	 * instead we use PDO with emulated prepares to run multi-statement SQL directly.
 	 */
 	protected function runSQL(string $sql): void
 	{
 		if ($this->driver->type === 'mysql') {
-			$this->execMultiple($sql);
+			$this->connect();
+			$prev = $this->pdo->getAttribute(\PDO::ATTR_EMULATE_PREPARES);
+			$this->pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
+			try {
+				$st = $this->pdo->prepare($sql);
+				$st->execute();
+				while ($st->nextRowset()) {}
+			} finally {
+				$this->pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, $prev);
+			}
 		}
 		else {
 			$this->exec($sql);

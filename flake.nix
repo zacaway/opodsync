@@ -15,6 +15,8 @@
           extensions = ({ enabled, all }: enabled ++ (with all; [
             sqlite3
             pdo_sqlite
+            pdo_mysql
+            mysqlnd
           ]));
           extraConfig = ''
             display_errors = On
@@ -22,6 +24,11 @@
             date.timezone = UTC
           '';
         };
+
+        mariadb = pkgs.mariadb;
+        mysqlDataDir = "$PWD/.nix-mysql-data";
+        mysqlSocket = "$PWD/.nix-mysql-data/mysql.sock";
+        mysqlPort = "3307";
 
         # Runtime directory for sockets and pid files
         runtimeDir = "$PWD/.nix-php-runtime";
@@ -137,14 +144,134 @@
           echo "Server stopped."
         '';
 
+        # Start MariaDB server
+        mysqlStartScript = pkgs.writeShellScriptBin "dev-mysql" ''
+          set -e
+
+          DATADIR="${mysqlDataDir}"
+          SOCKET="${mysqlSocket}"
+          PORT="${mysqlPort}"
+
+          if [ -f "$DATADIR/mysqld.pid" ] && kill -0 $(cat "$DATADIR/mysqld.pid") 2>/dev/null; then
+            echo "MariaDB is already running (PID $(cat "$DATADIR/mysqld.pid"))"
+            echo "  Socket: $SOCKET"
+            echo "  Port:   $PORT"
+            exit 0
+          fi
+
+          if [ ! -d "$DATADIR/mysql" ]; then
+            echo "Initializing MariaDB data directory..."
+            ${mariadb}/bin/mysql_install_db \
+              --datadir="$DATADIR" \
+              --basedir="${mariadb}" \
+              --auth-root-authentication-method=normal \
+              2>&1 | tail -1
+          fi
+
+          echo "Starting MariaDB on port $PORT..."
+          ${mariadb}/bin/mysqld \
+            --datadir="$DATADIR" \
+            --socket="$SOCKET" \
+            --port="$PORT" \
+            --pid-file="$DATADIR/mysqld.pid" \
+            --skip-networking=0 \
+            --bind-address=127.0.0.1 \
+            &
+
+          # Wait for server to be ready
+          for i in $(seq 1 50); do
+            if ${mariadb}/bin/mysqladmin --socket="$SOCKET" ping 2>/dev/null | grep -q alive; then
+              break
+            fi
+            sleep 0.1
+          done
+
+          if ! ${mariadb}/bin/mysqladmin --socket="$SOCKET" ping 2>/dev/null | grep -q alive; then
+            echo "ERROR: MariaDB failed to start"
+            exit 1
+          fi
+
+          # Set root password and create test database
+          # Try without password first (fresh init), then with password (existing data dir)
+          MYSQL="${mariadb}/bin/mysql"
+          if $MYSQL --socket="$SOCKET" -u root -e "SELECT 1" 2>/dev/null; then
+            MYSQL_AUTH="$MYSQL --socket=$SOCKET -u root"
+          else
+            MYSQL_AUTH="$MYSQL --socket=$SOCKET -u root -proot"
+          fi
+
+          $MYSQL_AUTH -e "
+            ALTER USER 'root'@'localhost' IDENTIFIED BY 'root';
+            FLUSH PRIVILEGES;
+            CREATE DATABASE IF NOT EXISTS opodsync_test;
+          " 2>/dev/null
+
+          echo "MariaDB is running."
+          echo "  Socket: $SOCKET"
+          echo "  Port:   $PORT"
+          echo "  User:   root"
+          echo "  Pass:   root"
+          echo "  DB:     opodsync_test"
+          echo ""
+          echo "Run integration tests with MySQL:"
+          echo "  DB_DRIVER=mysql DB_HOST=127.0.0.1 DB_PORT=$PORT DB_USER=root DB_PASSWORD=root DB_NAME=opodsync_test php test/start.php"
+          echo ""
+          echo "Connect manually:"
+          echo "  mysql --socket=$SOCKET -u root -proot opodsync_test"
+        '';
+
+        # Stop MariaDB server
+        mysqlStopScript = pkgs.writeShellScriptBin "dev-mysql-stop" ''
+          DATADIR="${mysqlDataDir}"
+          SOCKET="${mysqlSocket}"
+
+          if [ -f "$DATADIR/mysqld.pid" ]; then
+            PID=$(cat "$DATADIR/mysqld.pid")
+            if kill -0 "$PID" 2>/dev/null; then
+              ${mariadb}/bin/mysqladmin --socket="$SOCKET" -u root -proot shutdown 2>/dev/null || kill "$PID" 2>/dev/null
+              echo "MariaDB stopped."
+            else
+              echo "MariaDB is not running (stale pid file)."
+              rm -f "$DATADIR/mysqld.pid"
+            fi
+          else
+            echo "MariaDB is not running."
+          fi
+        '';
+
+        # Run integration tests against MySQL
+        mysqlTestScript = pkgs.writeShellScriptBin "dev-mysql-test" ''
+          set -e
+
+          SOCKET="${mysqlSocket}"
+          PORT="${mysqlPort}"
+
+          if ! ${mariadb}/bin/mysqladmin --socket="$SOCKET" -u root -proot ping 2>/dev/null | grep -q alive; then
+            echo "MariaDB is not running. Starting it..."
+            dev-mysql
+          fi
+
+          # Reset the test database
+          echo "Resetting opodsync_test database..."
+          ${mariadb}/bin/mysql --socket="$SOCKET" -u root -proot -e "DROP DATABASE IF EXISTS opodsync_test; CREATE DATABASE opodsync_test;"
+
+          echo "Running integration tests with MySQL..."
+          DB_DRIVER=mysql DB_HOST=127.0.0.1 DB_PORT="$PORT" DB_USER=root DB_PASSWORD=root DB_NAME=opodsync_test \
+            ${php}/bin/php test/start.php
+        '';
+
       in {
         devShells.default = pkgs.mkShell {
           buildInputs = [
             php
             pkgs.nginx
+            mariadb
             php.packages.composer
             startScript
             stopScript
+            mysqlStartScript
+            mysqlStopScript
+            mysqlTestScript
           ];
 
           shellHook = ''
@@ -155,8 +282,12 @@
             echo "Available commands:"
             echo "  dev-server      - Start nginx + php-fpm on http://localhost:8080"
             echo "  dev-server-stop - Stop the development server"
+            echo "  dev-mysql       - Start local MariaDB on port 3307"
+            echo "  dev-mysql-stop  - Stop local MariaDB"
+            echo "  dev-mysql-test  - Run integration tests against MariaDB"
             echo "  php             - PHP CLI"
             echo "  composer        - Composer package manager"
+            echo "  mysql           - MariaDB client"
             echo ""
             echo "First time setup:"
             echo "  1. Copy config.dist.php to server/data/config.local.php"

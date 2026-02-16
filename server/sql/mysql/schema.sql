@@ -80,5 +80,3 @@ CREATE TABLE app_passwords (
 	password_hash TEXT NOT NULL,
 	created INTEGER NOT NULL DEFAULT (UNIX_TIMESTAMP())
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE schema_version (version INTEGER NOT NULL);
