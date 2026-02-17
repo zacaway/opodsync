@@ -111,6 +111,11 @@ class Feed
 			return false;
 		}
 
+		return $this->parse($body);
+	}
+
+	public function parse(string $body): bool
+	{
 		while (preg_match('!<item[^>]*>(.*?)</item>!s', $body, $match)) {
 			$body = str_replace($match[0], '', $body);
 			$item = $match[1];
