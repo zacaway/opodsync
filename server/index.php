@@ -2,6 +2,12 @@
 
 namespace OPodSync;
 
+if (PHP_SAPI === 'cli') {
+	require_once __DIR__ . '/_inc.php';
+	$gpodder->updateAllFeeds(true);
+	exit(0);
+}
+
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Stop here if we are using CLI server and the requested resource exists,
@@ -26,11 +32,6 @@ try {
 catch (APIException $e) {
 	$api->error($e);
 	return;
-}
-
-if (PHP_SAPI === 'cli') {
-	$gpodder->updateAllFeeds(true);
-	exit(0);
 }
 
 $uri = trim($uri, '/');

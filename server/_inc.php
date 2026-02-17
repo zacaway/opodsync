@@ -49,7 +49,7 @@ $defaults = [
 	'ERRORS_REPORT_URL'            => null,
 	'TITLE'                        => 'My oPodSync server',
 	'DEBUG_LOG'                    => null,
-	'HTTP_SCHEME'                  => !empty($_SERVER['HTTPS']) || $_SERVER['SERVER_PORT'] == 443 ? 'https' : 'http',
+	'HTTP_SCHEME'                  => !empty($_SERVER['HTTPS']) || ($_SERVER['SERVER_PORT'] ?? 0) == 443 ? 'https' : 'http',
 ];
 
 foreach ($defaults as $const => $value) {
