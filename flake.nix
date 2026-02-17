@@ -169,7 +169,7 @@
           fi
 
           echo "Starting MariaDB on port $PORT..."
-          ${mariadb}/bin/mysqld \
+          ${mariadb}/bin/mariadbd \
             --datadir="$DATADIR" \
             --socket="$SOCKET" \
             --port="$PORT" \
@@ -217,7 +217,7 @@
           echo "  DB_DRIVER=mysql DB_HOST=127.0.0.1 DB_PORT=$PORT DB_USER=root DB_PASSWORD=root DB_NAME=opodsync_test php test/start.php"
           echo ""
           echo "Connect manually:"
-          echo "  mysql --socket=$SOCKET -u root -proot opodsync_test"
+          echo "  mariadb --socket=$SOCKET -u root -proot opodsync_test"
         '';
 
         # Stop MariaDB server
@@ -253,7 +253,7 @@
 
           # Reset the test database
           echo "Resetting opodsync_test database..."
-          ${mariadb}/bin/mysql --socket="$SOCKET" -u root -proot -e "DROP DATABASE IF EXISTS opodsync_test; CREATE DATABASE opodsync_test;"
+          ${mariadb}/bin/mariadb --socket="$SOCKET" -u root -proot -e "DROP DATABASE IF EXISTS opodsync_test; CREATE DATABASE opodsync_test;"
 
           echo "Running integration tests with MySQL..."
           DB_DRIVER=mysql DB_HOST=127.0.0.1 DB_PORT="$PORT" DB_USER=root DB_PASSWORD=root DB_NAME=opodsync_test \

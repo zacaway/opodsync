@@ -19,6 +19,16 @@ class Feed
 		$this->feed_url = $url;
 	}
 
+	/**
+	 * Parse a date string, normalizing non-standard day abbreviations
+	 * (e.g. "Thurs" -> "Thu", "Tues" -> "Tue") that some feeds use.
+	 */
+	protected static function parseDate(string $str): \DateTime
+	{
+		$str = preg_replace('/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\w+,/i', '$1,', $str);
+		return new \DateTime($str);
+	}
+
 	public function load(\stdClass $data): void
 	{
 		foreach ($data as $key => $value) {
@@ -26,7 +36,7 @@ class Feed
 				continue;
 			}
 			elseif ($key === 'pubdate' && $value) {
-				$this->$key = new \DateTime($value);
+				$this->$key = self::parseDate($value);
 			}
 			else {
 				$this->$key = $value;
@@ -116,7 +126,7 @@ class Feed
 				'image_url'   => $this->getTagAttribute($item, 'itunes:image', 'href') ?? $this->getTagValue($item, 'image', 'url'),
 				'url'         => $this->getTagValue($item, 'link'),
 				'media_url'   => $url,
-				'pubdate'     => $pubdate ? new \DateTime($pubdate) : null,
+				'pubdate'     => $pubdate ? self::parseDate($pubdate) : null,
 				'title'       => $this->getTagValue($item, 'title'),
 				'description' => $this->getTagValue($item, 'description') ?? $this->getTagValue($item, 'content:encoded'),
 				'duration'    => $this->getDuration($this->getTagValue($item, 'itunes:duration') ?? $this->getTagAttribute($item, 'enclosure', 'length')),
@@ -136,7 +146,7 @@ class Feed
 		$this->description = $this->getTagValue($body, 'description');
 		$this->language = $language ? substr($language, 0, 2) : null;
 		$this->image_url = $this->getTagAttribute($body, 'itunes:image', 'href') ?? $this->getTagValue($body, 'image', 'url');
-		$this->pubdate = $pubdate ? new \DateTime($pubdate) : null;
+		$this->pubdate = $pubdate ? self::parseDate($pubdate) : null;
 
 		return true;
 	}
