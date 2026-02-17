@@ -11,3 +11,4 @@
 -- Works on both SQLite and MySQL.
 
 UPDATE episodes SET duration = NULL WHERE duration IS NOT NULL;
+UPDATE feeds SET last_fetch = 0;

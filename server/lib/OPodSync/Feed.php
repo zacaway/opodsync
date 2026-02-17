@@ -53,6 +53,7 @@ class Feed
 		$db->simple('UPDATE subscriptions SET feed = ? WHERE url = ?;', $feed_id, $this->feed_url);
 
 		foreach ($this->episodes as $episode) {
+			@set_time_limit(30);
 			$episode = (array) $episode;
 			$episode['pubdate'] = $episode['pubdate'] ? $episode['pubdate']->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s') : null;
 			$episode['feed'] = $feed_id;
