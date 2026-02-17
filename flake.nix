@@ -265,6 +265,7 @@
           buildInputs = [
             php
             pkgs.nginx
+            pkgs.jq
             mariadb
             php.packages.composer
             startScript
