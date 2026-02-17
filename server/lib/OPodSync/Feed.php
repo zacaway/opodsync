@@ -54,7 +54,7 @@ class Feed
 
 		foreach ($this->episodes as $episode) {
 			$episode = (array) $episode;
-			$episode['pubdate'] = $episode['pubdate']->format('Y-m-d H:i:s \U\T\C');
+			$episode['pubdate'] = $episode['pubdate'] ? $episode['pubdate']->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s') : null;
 			$episode['feed'] = $feed_id;
 			$db->upsert('episodes', $episode, ['feed', 'media_url']);
 			$id = $db->firstColumn('SELECT id FROM episodes WHERE media_url = ?;', $episode['media_url']);
@@ -210,7 +210,7 @@ class Feed
 	public function export(): array
 	{
 		$out = get_object_vars($this);
-		$out['pubdate'] = $out['pubdate'] ? $out['pubdate']->format('Y-m-d H:i:s \U\T\C') : null;
+		$out['pubdate'] = $out['pubdate'] ? $out['pubdate']->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s') : null;
 		unset($out['episodes']);
 		return $out;
 	}
