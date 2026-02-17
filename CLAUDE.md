@@ -78,10 +78,6 @@ Requires [Nix](https://nixos.org). Run `nix develop` to get a shell with PHP 8.3
 - **PDO named parameter reuse.** With `ATTR_EMULATE_PREPARES = false`, PDO rejects duplicate named params. The `upsert()` method uses `excluded.col` (SQLite) and `VALUES(col)` (MySQL) to avoid this.
 - **KD2 `execMultiple()` wraps in a transaction** — unsuitable for DDL. Use `runSQL()` instead for schema/migration SQL.
 
-## Known Bugs
-
-- `Feed::getDuration()` (line 153): array indices reversed for colon-format durations. `$parts[2]` is used as hours, `$parts[0]` as seconds — should be opposite. Also has operator precedence bug: `$parts[0] ?? 0` binds tighter than `+`. Input "1:30:00" gives 1801 instead of 5400.
-
 ## Style
 
 - No Composer, no external dependencies — keep it that way.

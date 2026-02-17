@@ -77,19 +77,11 @@ Test::strictlyEquals(21, Test::invoke($feed, 'getDuration', ['21']));
 
 // MM:SS format
 // "1:30" = 1 min 30 sec = 90 seconds
-// But due to bug at line 153 (reversed indices): ($parts[2]??0)*3600 + ($parts[1]??0)*60 + $parts[0]
-// For "1:30": parts=[1,30], so (undef??0)*3600 + 30*60 + 1 = 1801
-// 1801 > 20, so it passes
-Test::strictlyEquals(1801, Test::invoke($feed, 'getDuration', ['1:30']),
-	'MM:SS format — known bug: indices are reversed, "1:30" gives 1801 instead of 90');
+Test::strictlyEquals(90, Test::invoke($feed, 'getDuration', ['1:30']));
 
 // HH:MM:SS format
-// "1:30:00" = 1 hour 30 min = 5400 seconds expected
-// Bug: parts=[1,30,0], so 0*3600 + 30*60 + 1 = 1801
-Test::strictlyEquals(1801, Test::invoke($feed, 'getDuration', ['1:30:00']),
-	'HH:MM:SS format — known bug: indices are reversed, "1:30:00" gives 1801 instead of 5400');
+// "1:30:00" = 1 hour 30 min = 5400 seconds
+Test::strictlyEquals(5400, Test::invoke($feed, 'getDuration', ['1:30:00']));
 
-// Short colon format that falls under threshold returns null
-// "0:10" → parts=[0,10], bug: (undef??0)*3600 + 10*60 + 0 = 600
-// 600 > 20, so this actually passes the threshold
-Test::strictlyEquals(600, Test::invoke($feed, 'getDuration', ['0:10']));
+// Short colon format: "0:10" = 10 seconds, under threshold → null
+Test::strictlyEquals(null, Test::invoke($feed, 'getDuration', ['0:10']));

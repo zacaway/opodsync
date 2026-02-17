@@ -28,11 +28,8 @@ Test::assert(str_contains($episodes[0]->title, 'Wild Men, Morally Unconventional
 Test::strictlyEquals('http://cuttingthrough.jenkness.com/REDUX2026/Alan_Watt_CTTM_250_Redux_Wild_Men_Morally_Unconventional_Feb152026.mp3', $episodes[0]->media_url);
 Test::strictlyEquals('2026-02-15 23:00:00', $episodes[0]->pubdate->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'));
 
-// HH:MM:SS duration: "01:48:09" = 6489 seconds
-// Known bug: getDuration reverses indices, so this gives wrong result
-// $parts = [01, 48, 09] → bug computes: 9*3600 + 48*60 + 1 = 35281
-Test::strictlyEquals(35281, $episodes[0]->duration,
-	'HH:MM:SS duration — known bug: indices reversed, "01:48:09" gives 35281 instead of 6489');
+// HH:MM:SS duration: "01:48:09" = 1*3600 + 48*60 + 9 = 6489 seconds
+Test::strictlyEquals(6489, $episodes[0]->duration);
 
 // Third episode — non-standard "Thurs" day abbreviation (parseDate normalizes it)
 Test::assert(str_contains($episodes[2]->title, 'Reality Bytes Radio'));
@@ -44,9 +41,8 @@ Test::strictlyEquals('2018-12-25 23:00:00', $episodes[3]->pubdate->setTimezone(n
 // Last episode — oldest, "Fri" date from 2006
 Test::assert(str_contains($episodes[4]->title, 'Grassy Knoll'));
 Test::strictlyEquals('2006-01-28 02:00:00', $episodes[4]->pubdate->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'));
-// Duration "01:00:00" — same bug: parts=[01,00,00] → 0*3600 + 0*60 + 1 = 1, under threshold → null
-Test::strictlyEquals(null, $episodes[4]->duration,
-	'HH:MM:SS duration — known bug: "01:00:00" gives 1 (under threshold), returns null instead of 3600');
+// Duration "01:00:00" = 3600 seconds
+Test::strictlyEquals(3600, $episodes[4]->duration);
 
 // Export produces MySQL-compatible datetime (no timezone suffix)
 $exported = $feed->export();
