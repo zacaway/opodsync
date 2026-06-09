@@ -43,7 +43,7 @@ $defaults = [
 	'ERRORS_REPORT_URL'            => null,
 	'TITLE'                        => 'My oPodSync server',
 	'DEBUG_LOG'                    => null,
-	'HTTP_SCHEME'                  => !empty($_SERVER['HTTPS']) || $_SERVER['SERVER_PORT'] == 443 ? 'https' : 'http',
+	'HTTP_SCHEME'                  => !empty($_SERVER['HTTPS']) || ($_SERVER['SERVER_PORT'] ?? null) == 443 ? 'https' : 'http',
 ];
 
 foreach ($defaults as $const => $value) {
@@ -73,8 +73,9 @@ foreach ($defaults as $const => $value) {
 }
 
 if (!defined(__NAMESPACE__ . '\BASE_URL')) {
-	$name = $_SERVER['SERVER_NAME'];
-	$port = !in_array($_SERVER['SERVER_PORT'], [80, 443]) ? ':' . $_SERVER['SERVER_PORT'] : '';
+	$name = $_SERVER['SERVER_NAME'] ?? 'localhost';
+	$server_port = $_SERVER['SERVER_PORT'] ?? null;
+	$port = $server_port && !in_array($server_port, [80, 443]) ? ':' . $server_port : '';
 	$root = '/';
 
 	define(__NAMESPACE__ . '\BASE_URL', sprintf('%s://%s%s%s', HTTP_SCHEME, $name, $port, $root));
